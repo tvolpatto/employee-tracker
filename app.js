@@ -131,8 +131,9 @@ function viewEmployees() {
     if (err) throw err;
     console.table(res);
 
-    promptUser();
-  });
+  }).catch(err => {
+    promptError(err);
+  }).finally(promptUser());
 }
 
 function viewDepartments() {
@@ -141,8 +142,9 @@ function viewDepartments() {
     if (err) throw err;
     console.table(res);
 
-    promptUser();
-  });
+  }).catch(err => {
+    promptError(err);
+  }).finally(promptUser());
 }
 
 function viewRoles() {
@@ -151,8 +153,10 @@ function viewRoles() {
     if (err) throw err;
     console.table(res);
 
-    promptUser();
-  });
+  }).catch(err => {
+    promptError(err);
+  }).finally(promptUser());
+
 }
 
 function addDepartment() {
@@ -160,9 +164,12 @@ function addDepartment() {
     var department = new Department(null, answer.name);
     db.addNewRegistry("insert into department set ?", department).then((res) => {
       console.log(res);
-      viewDepartments();
-    });
+
+    }).catch(err => {
+      promptError(err);
+    }).finally(viewDepartments());
   });
+
 }
 
 function addRole() {
@@ -172,8 +179,9 @@ function addRole() {
 
       db.addNewRegistry("insert into role set ?", role).then((res) => {
         console.log(res);
-        viewRoles();
-      });
+      }).catch(err => {
+        promptError(err);
+      }).finally(viewRoles());
     });
   });
 }
@@ -185,8 +193,10 @@ function addEmployee() {
 
       db.addNewRegistry("insert into employee set ?", employee).then((res) => {
         console.log(res);
-        viewEmployees();
-      });
+      }).catch(err => {
+        promptError(err);
+
+      }).finally(viewEmployees());
     });
   });
 }
@@ -198,8 +208,10 @@ function updateEmployeeRole() {
 
       db.update("update employee set ? where ?", data).then((res) => {
         console.log(res);
-        viewEmployees();
-      });
+      }).catch(err => {
+        promptError(err);
+
+      }).finally(viewEmployees());
     });
   });
 }
@@ -214,8 +226,10 @@ function updateEmployeeManager() {
 
       db.update("update employee set ? where ?", data).then((res) => {
         console.log(res);
-        viewEmployees();
-      });
+      }).catch(err => {
+        promptError(err);
+
+      }).finally(viewEmployees());
     });
   });
 }
@@ -226,8 +240,10 @@ function deleteEmployee() {
 
       db.remove("delete from  employee where ?", answer.id).then((res) => {
         console.log(res);
-        viewEmployees();
-      });
+
+      }).catch(err => {
+        promptError(err);
+      }).finally(viewEmployees());
     });
   });
 }
@@ -237,22 +253,30 @@ function deleteRole() {
     inquirer.prompt(questions).then(answer => {
       db.remove("delete from role where ?", answer.id).then((res) => {
         console.log(res);
-        viewRoles();
-      });
+
+      }).catch(err => {
+        promptError(err);
+      }).finally(viewRoles());
     });
   });
 }
 
 function deleteDepartment() {
-  Department.buildQuestions(db,"DELETE").then(questions => {
+  Department.buildQuestions(db, "DELETE").then(questions => {
     inquirer.prompt(questions).then(answer => {
       db.remove("delete from department where ?", answer.id).then((res) => {
         console.log(res);
       }).catch(err => {
-        console.log(err.sqlMessage);
+        promptError(err);
       }).finally(viewDepartments());
     });
   });
+}
+
+function promptError(err) {
+  console.log("\n------------------------------");
+  console.log("ERROR. Reason: " + err.code);
+  console.log("------------------------------");
 }
 
 start();
