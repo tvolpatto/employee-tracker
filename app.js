@@ -20,37 +20,38 @@ function promptUser() {
 function getQuestions() {
   const questionChoices = [
     {
-      key: 1,
       name: "View all employees.",
       value: "viewEmployee"
     },
     {
-      key: 2,
       name: "View all departments.",
       value: "viewDepartment"
     },
     {
-      key: 3,
       name: "View all all roles.",
       value: "viewRole"
     },
     {
-      key: 4,
       name: "Add a new department.",
       value: "addDepartment"
     },
     {
-      key: 5,
       name: "Add a new role.",
       value: "addRole"
     },
     {
-      key: 6,
       name: "Add a new employee.",
       value: "addEmployee"
     },
     {
-      key: 7,
+      name: "Update an employee role.",
+      value: "updateEmployeeRole"
+    },
+    {
+      name: "Update an employee manager.",
+      value: "updateEmployeeManager"
+    },
+    {
       name: "Exit.",
       value: "exit"
     }
@@ -85,6 +86,12 @@ function setNextAction(action) {
     case "addDepartment":
       addDepartment();
       break;
+    case "updateEmployeeRole":
+      updateEmployeeRole();
+      break
+    case "updateEmployeeManager":
+      updateEmployeeManager();
+      break
     case "exit":
       return db.close();
 
@@ -123,12 +130,7 @@ function viewRoles() {
 }
 
 function addDepartment() {
-  const question = {
-    type: "input",
-    message: "What is the name of the new department?",
-    name: "name"
-  };
-  inquirer.prompt(question).then((answer) => {
+  inquirer.prompt(Department.buildQuestions()).then((answer) => {
     var department = new Department(null, answer.name);
     db.addNewRegistry("insert into department set ?", department).then((res) => {
       console.log(res);
@@ -138,33 +140,7 @@ function addDepartment() {
 }
 
 function addRole() {
-  db.selectAllFrom("select * from department order by name").then(departments => {
-    const choices = []
-    departments.forEach(d => {
-      choices.push({
-        name: d.name,
-        value: d.id
-      });
-    });
-
-    const questions = [
-      {
-        type: "input",
-        message: "What is the title of the new role?",
-        name: "title"
-      },
-      {
-        type: "number",
-        message: "How much will be the role salary?",
-        name: "salary"
-      },
-      {
-        type: "list",
-        message: "Select the new role department:",
-        name: "department",
-        choices: choices
-      }];
-
+  Role.buildQuestions(db).then(questions => {
     inquirer.prompt(questions).then(answers => {
       const role = new Role(null, answers.title, answers.salary, answers.department);
 
@@ -172,63 +148,50 @@ function addRole() {
         console.log(res);
         viewRoles();
       });
-    })
+    });
   });
-
 }
 
 function addEmployee() {
-  db.selectAllFrom("select id as value, title as name from role order by title").then(roles => {
-    db.selectAllFrom("select id as value, CONCAT(first_name,' ', last_name) as name from employee order by name").then(managers => {
+  Employee.buildQuestions(db, "ADD").then(questions => {
+    inquirer.prompt(questions).then(answers => {
+      const employee = new Employee(null, answers.first_name, answers.last_name, answers.role, answers.manager);
 
-      const questions = [
-        {
-          type: "input",
-          message: "What is the employee first name?",
-          name: "first_name"
-        },
-        {
-          type: "input",
-          message: "What is the employee last name?",
-          name: "last_name"
-        },
-        {
-          type: "list",
-          message: "Select the new employee's role:",
-          name: "role",
-          choices: roles
-        },
-        {
-          type: "confirm",
-          message: "Do you want to set up a manager?",
-          name: "need_manager",
-        },
-        {
-          type: "list",
-          message: "Select the new employee's manager:",
-          name: "manager",
-          choices: managers,
-          when: function (answer) {
-            if (!answer.need_manager) {
-              return null;
-            } else {
-              return this;
-            }
-          }
-        }];
-
-      inquirer.prompt(questions).then(answers => {
-        const employee = new Employee(null, answers.first_name, answers.last_name, answers.role, answers.manager);
-    
-        db.addNewRegistry("insert into employee set ?", employee).then((res) => {
-          console.log(res);
-          viewEmployees();
-         });
+      db.addNewRegistry("insert into employee set ?", employee).then((res) => {
+        console.log(res);
+        viewEmployees();
       });
     });
   });
-
 }
 
+function updateEmployeeRole() {
+  Employee.buildQuestions(db, "UPDATE_ROLE").then(questions => {
+    inquirer.prompt(questions).then(answers => {
+      const data = [{ role_id: answers.role }, { id: answers.id }];
+
+      db.update("update employee set ? where ?", data).then((res) => {
+        console.log(res);
+        viewEmployees();
+      });
+    });
+  });
+}
+
+function updateEmployeeManager() {
+  Employee.buildQuestions(db, "UPDATE_MANAGER").then(questions => {
+    inquirer.prompt(questions).then(answers => {
+      if (answers.manager == answers.id) {
+        answers.manager = null;
+      }
+      const data = [{ manager_id: answers.manager }, { id: answers.id }];
+
+      db.update("update employee set ? where ?", data).then((res) => {
+        console.log(res);
+        viewEmployees();
+      });
+    });
+  });
+}
 
 start();
