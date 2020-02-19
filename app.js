@@ -19,6 +19,7 @@ function promptUser() {
 
 function getQuestions() {
   const questionChoices = [
+    new inquirer.Separator(),
     {
       name: "View all employees.",
       value: "viewEmployee"
@@ -31,6 +32,7 @@ function getQuestions() {
       name: "View all all roles.",
       value: "viewRole"
     },
+    new inquirer.Separator(),
     {
       name: "Add a new department.",
       value: "addDepartment"
@@ -43,6 +45,7 @@ function getQuestions() {
       name: "Add a new employee.",
       value: "addEmployee"
     },
+    new inquirer.Separator(),
     {
       name: "Update an employee role.",
       value: "updateEmployeeRole"
@@ -51,6 +54,20 @@ function getQuestions() {
       name: "Update an employee manager.",
       value: "updateEmployeeManager"
     },
+    new inquirer.Separator(),
+    {
+      name: "Delete department.",
+      value: "delDepartment"
+    },
+    {
+      name: "Delete role.",
+      value: "delRole"
+    },
+    {
+      name: "Delete employee.",
+      value: "delEmployee"
+    },
+    new inquirer.Separator(),
     {
       name: "Exit.",
       value: "exit"
@@ -92,6 +109,15 @@ function setNextAction(action) {
     case "updateEmployeeManager":
       updateEmployeeManager();
       break
+    case "delEmployee":
+      deleteEmployee()
+      break;
+    case "delRole":
+      deleteRole();
+      break;
+    case "delDepartment":
+      deleteDepartment();
+      break;
     case "exit":
       return db.close();
 
@@ -190,6 +216,41 @@ function updateEmployeeManager() {
         console.log(res);
         viewEmployees();
       });
+    });
+  });
+}
+
+function deleteEmployee() {
+  Employee.buildQuestions(db, "DELETE").then(questions => {
+    inquirer.prompt(questions).then(answer => {
+
+      db.remove("delete from  employee where ?", answer.id).then((res) => {
+        console.log(res);
+        viewEmployees();
+      });
+    });
+  });
+}
+
+function deleteRole() {
+  Role.buildQuestions(db, "DELETE").then(questions => {
+    inquirer.prompt(questions).then(answer => {
+      db.remove("delete from role where ?", answer.id).then((res) => {
+        console.log(res);
+        viewRoles();
+      });
+    });
+  });
+}
+
+function deleteDepartment() {
+  Department.buildQuestions(db,"DELETE").then(questions => {
+    inquirer.prompt(questions).then(answer => {
+      db.remove("delete from department where ?", answer.id).then((res) => {
+        console.log(res);
+      }).catch(err => {
+        console.log(err.sqlMessage);
+      }).finally(viewDepartments());
     });
   });
 }
