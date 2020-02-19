@@ -2,6 +2,7 @@ var inquirer = require("inquirer");
 var table = require("console.table");
 var db = require("./lib/database");
 const Department = require("./lib/department");
+const Role = require("./lib/role");
 
 function start() {
   db.open().then(() => {
@@ -77,6 +78,7 @@ function setNextAction(action) {
     case "addEmployee":
       break;
     case "addRole":
+      addRole();
       break;
     case "addDepartment":
       addDepartment();
@@ -133,10 +135,43 @@ function addDepartment() {
   });
 }
 
-function addRole(role) {
-  db.addNewRegistry("insert into role set ?", role).then((res) => {
-    console.log(res);
+function addRole() {
+  db.selectAllFrom("select * from department order by name").then(departments =>{
+    const choices = []
+    departments.forEach(d =>{
+      choices.push ({
+        name: d.name,
+        value: d.id      });
+    });
+
+    const questions =[
+      {
+        type: "input",
+        message: "What is the title of the new department?",
+        name: "title"
+      },
+      {
+        type: "number",
+        message: "How much will be the role salary?",
+        name: "salary"
+      },
+      {
+        type: "list",
+        message: "Select the new role department:",
+        name: "department",
+        choices : choices
+      }];
+
+      inquirer.prompt(questions).then(answers => {
+        const role = new Role(null, answers.title, answers.salary, answers.department);
+
+        db.addNewRegistry("insert into role set ?", role).then((res) => {
+          console.log(res);
+          viewRoles();
+        });
+      })
   });
+  
 }
 
 function addEmployee(employee) {
