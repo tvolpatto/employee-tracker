@@ -1,6 +1,7 @@
 var inquirer = require("inquirer");
 var table = require("console.table");
 var db = require("./lib/database");
+const Department = require("./lib/department");
 
 function start() {
   db.open().then(() => {
@@ -78,6 +79,7 @@ function setNextAction(action) {
     case "addRole":
       break;
     case "addDepartment":
+      addDepartment();
       break;
     case "exit" :
       return db.close();
@@ -107,7 +109,7 @@ function viewDepartments() {
 }
 
 function viewRoles() {
-  const query = "select * from role;";
+  const query = "select r.id, r.title, r.salary, d.name as department from role r left join department d on d.id=r.department_id;";
   db.selectAllFrom(query).then((res, err) => {
     if (err) throw err;
     console.table(res);
@@ -116,10 +118,18 @@ function viewRoles() {
   });
 }
 
-
-function addDepartment(department) {
-  db.addNewRegistry("insert into department set ?", department).then((res) => {
-    console.log(res);
+function addDepartment() {
+  const question = {
+    type: "input",
+    message: "What is the name of the new department?",
+    name: "name"
+  };
+  inquirer.prompt(question).then((answer) =>{
+    var department = new Department(null, answer.name);
+    db.addNewRegistry("insert into department set ?", department).then((res) => {
+      console.log(res);
+      viewDepartments();
+    });
   });
 }
 
