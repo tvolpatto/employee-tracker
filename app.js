@@ -4,6 +4,7 @@ var db = require("./lib/database");
 const Department = require("./lib/department");
 const Role = require("./lib/role");
 const Employee = require("./lib/employee");
+const menu = require("./lib/menu-builder");
 
 function start() {
   db.open().then(() => {
@@ -12,74 +13,9 @@ function start() {
 }
 
 function promptUser() {
-  inquirer.prompt(getQuestions()).then((answer) => {
+  inquirer.prompt(menu.menuOptions()).then((answer) => {
     setNextAction(answer.action);
   });
-}
-
-function getQuestions() {
-  const questionChoices = [
-    new inquirer.Separator(),
-    {
-      name: "View all employees.",
-      value: "viewEmployee"
-    },
-    {
-      name: "View all departments.",
-      value: "viewDepartment"
-    },
-    {
-      name: "View all all roles.",
-      value: "viewRole"
-    },
-    new inquirer.Separator(),
-    {
-      name: "Add a new department.",
-      value: "addDepartment"
-    },
-    {
-      name: "Add a new role.",
-      value: "addRole"
-    },
-    {
-      name: "Add a new employee.",
-      value: "addEmployee"
-    },
-    new inquirer.Separator(),
-    {
-      name: "Update an employee role.",
-      value: "updateEmployeeRole"
-    },
-    {
-      name: "Update an employee manager.",
-      value: "updateEmployeeManager"
-    },
-    new inquirer.Separator(),
-    {
-      name: "Delete department.",
-      value: "delDepartment"
-    },
-    {
-      name: "Delete role.",
-      value: "delRole"
-    },
-    {
-      name: "Delete employee.",
-      value: "delEmployee"
-    },
-    new inquirer.Separator(),
-    {
-      name: "Exit.",
-      value: "exit"
-    }
-  ];
-
-  return [{
-    type: "list",
-    message: `What would you like to do?`,
-    name: "action",
-    choices: questionChoices
-  }];
 }
 
 function setNextAction(action) {
@@ -129,6 +65,7 @@ function viewEmployees() {
     " left join role r on r.id=e.role_id left join department d on r.department_id=d.id left join employee m on m.id=e.manager_id";
   db.selectAllFrom(query).then((res, err) => {
     if (err) throw err;
+    console.log("\n --------------------------");
     console.table(res);
 
   }).catch(err => {
@@ -140,6 +77,7 @@ function viewDepartments() {
   const query = "select * from department;";
   db.selectAllFrom(query).then((res, err) => {
     if (err) throw err;
+    console.log("\n --------------------------");
     console.table(res);
 
   }).catch(err => {
@@ -151,6 +89,7 @@ function viewRoles() {
   const query = "select r.id, r.title, r.salary, d.name as department from role r left join department d on d.id=r.department_id;";
   db.selectAllFrom(query).then((res, err) => {
     if (err) throw err;
+    console.log("\n --------------------------");
     console.table(res);
 
   }).catch(err => {
