@@ -33,6 +33,9 @@ function setNextAction(action) {
     case "viewDepartmentBudget":
       viewDepartmentBudget();
       break;
+    case "viewEmployeeByManager":
+      viewEmployeeByManager();
+      break;
     case "addEmployee":
       addEmployee()
       break;
@@ -74,6 +77,24 @@ function viewEmployees() {
   }).catch(err => {
     promptError(err);
   }).finally(promptUser());
+}
+
+function viewEmployeeByManager() {
+  const query = "select e.id, CONCAT(e.first_name,' ', e.last_name) as employee,  r.title,r.salary from employee e" +
+    " left join role r on r.id=e.role_id left join employee m on m.id=e.manager_id where ?";
+  Employee.buildQuestions(db, "VIEW_MANAGER").then(questions => {
+    inquirer.prompt(questions).then(answer => {
+     console.log(answer);
+      db.selectWithParams(query, {'e.manager_id': answer.manager_id}).then((res, err) => {
+        if (err) throw err;
+        console.log("\n --------------------------");
+        console.table(res);
+
+      }).catch(err => {
+        promptError(err);
+      }).finally(promptUser());
+    });
+  });
 }
 
 function viewDepartmentBudget() {
