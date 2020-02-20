@@ -7,7 +7,7 @@
  ## Running 
 
  1. Install the dependencies: ```npm install```;
- 2. Run: ```node start```;
+ 2. Run: ```npm start```;
  
 
 ## Dependencies
