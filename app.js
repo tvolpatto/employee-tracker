@@ -30,6 +30,9 @@ function setNextAction(action) {
     case "viewDepartment":
       viewDepartments();
       break;
+    case "viewDepartmentBudget":
+      viewDepartmentBudget();
+      break;
     case "addEmployee":
       addEmployee()
       break;
@@ -66,6 +69,19 @@ function viewEmployees() {
   db.selectAllFrom(query).then((res, err) => {
     if (err) throw err;
     console.log("\n --------------------------");
+    console.table(res);
+
+  }).catch(err => {
+    promptError(err);
+  }).finally(promptUser());
+}
+
+function viewDepartmentBudget() {
+  const query = "select  d.name, sum(r.salary) as total_budget, count(e.id) as number_employees from role r left join department d" +
+    " on r.department_id=d.id left join employee e on r.id=e.role_id group by  d.name having count(e.id) >0";
+  db.selectAllFrom(query).then((res, err) => {
+    if (err) throw err;
+    console.log("\n Total used budget by department");
     console.table(res);
 
   }).catch(err => {
